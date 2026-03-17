@@ -1,0 +1,1896 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ZODASCOPE — Daily Readings</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&family=Cinzel:wght@400;600&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  /* ============================================
+     CSS VARIABLES & RESET
+  ============================================ */
+  :root {
+    --void: #030308;
+    --deep: #07070f;
+    --surface: rgba(255,255,255,0.03);
+    --glass: rgba(255,255,255,0.06);
+    --border: rgba(255,255,255,0.08);
+    --border-bright: rgba(255,255,255,0.15);
+    --gold: #c9a84c;
+    --gold-glow: rgba(201,168,76,0.3);
+    --cyan: #4df3ff;
+    --cyan-glow: rgba(77,243,255,0.2);
+    --violet: #a855f7;
+    --violet-glow: rgba(168,85,247,0.25);
+    --crimson: #ff4466;
+    --text-primary: rgba(255,255,255,0.92);
+    --text-muted: rgba(255,255,255,0.4);
+    --text-dim: rgba(255,255,255,0.2);
+    --font-display: 'Cinzel Decorative', serif;
+    --font-title: 'Cinzel', serif;
+    --font-body: 'Inter', sans-serif;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--void);
+    color: var(--text-primary);
+    font-family: var(--font-body);
+    min-height: 100vh;
+    overflow-x: hidden;
+    cursor: default;
+  }
+
+  /* ============================================
+     ANIMATED BACKGROUND
+  ============================================ */
+  #bg-canvas {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  .gradient-orb {
+    position: fixed;
+    border-radius: 50%;
+    filter: blur(80px);
+    opacity: 0.12;
+    pointer-events: none;
+    animation: orbDrift 20s ease-in-out infinite alternate;
+    z-index: 0;
+  }
+
+  .orb-1 { width: 600px; height: 600px; background: var(--violet); top: -200px; left: -200px; animation-duration: 25s; }
+  .orb-2 { width: 400px; height: 400px; background: var(--cyan); bottom: -100px; right: -100px; animation-duration: 18s; animation-delay: -8s; }
+  .orb-3 { width: 300px; height: 300px; background: var(--gold); top: 40%; left: 50%; animation-duration: 30s; animation-delay: -15s; opacity: 0.07; }
+
+  @keyframes orbDrift {
+    0% { transform: translate(0, 0) scale(1); }
+    33% { transform: translate(40px, -30px) scale(1.05); }
+    66% { transform: translate(-20px, 40px) scale(0.95); }
+    100% { transform: translate(30px, 20px) scale(1.02); }
+  }
+
+  /* ============================================
+     PARTICLE CANVAS
+  ============================================ */
+  #particle-canvas {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    opacity: 0.5;
+  }
+
+  /* ============================================
+     APP WRAPPER
+  ============================================ */
+  #app {
+    position: relative;
+    z-index: 1;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  /* ============================================
+     HEADER
+  ============================================ */
+  .header {
+    width: 100%;
+    padding: 32px 24px 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .header-eyebrow {
+    font-family: var(--font-body);
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.35em;
+    color: var(--gold);
+    text-transform: uppercase;
+    opacity: 0.8;
+  }
+
+  .header-title {
+    font-family: var(--font-display);
+    font-size: clamp(32px, 6vw, 52px);
+    font-weight: 900;
+    letter-spacing: 0.1em;
+    background: linear-gradient(135deg, #e8d5a3 0%, var(--gold) 40%, #fff8e7 70%, #c9a84c 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-align: center;
+    line-height: 1;
+    filter: drop-shadow(0 0 30px rgba(201,168,76,0.4));
+  }
+
+  .header-sub {
+    font-family: var(--font-title);
+    font-size: 12px;
+    letter-spacing: 0.2em;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    margin-top: 4px;
+  }
+
+  .header-divider {
+    width: 120px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+    margin-top: 20px;
+    opacity: 0.5;
+  }
+
+  /* ============================================
+     RETENTION BANNER
+  ============================================ */
+  .retention-banner {
+    display: none;
+    background: rgba(168,85,247,0.08);
+    border: 1px solid rgba(168,85,247,0.2);
+    border-radius: 12px;
+    padding: 10px 20px;
+    margin: 20px 24px 0;
+    text-align: center;
+    font-size: 12px;
+    color: rgba(168,85,247,0.9);
+    letter-spacing: 0.05em;
+    max-width: 500px;
+    width: calc(100% - 48px);
+  }
+
+  .retention-banner.show { display: block; animation: fadeSlideIn 0.5s ease; }
+
+  .countdown-timer {
+    font-weight: 600;
+    color: var(--violet);
+  }
+
+  /* ============================================
+     GROWTH HOOK MESSAGE
+  ============================================ */
+  .growth-hook {
+    margin: 24px 24px 0;
+    max-width: 420px;
+    width: calc(100% - 48px);
+    background: rgba(77,243,255,0.04);
+    border: 1px solid rgba(77,243,255,0.12);
+    border-radius: 10px;
+    padding: 10px 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    animation: pulseGlow 3s ease-in-out infinite;
+  }
+
+  .growth-hook-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--cyan);
+    flex-shrink: 0;
+    animation: blink 2s ease-in-out infinite;
+  }
+
+  .growth-hook-text {
+    font-size: 11px;
+    color: rgba(77,243,255,0.75);
+    letter-spacing: 0.05em;
+    font-style: italic;
+  }
+
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
+  @keyframes pulseGlow { 0%,100%{box-shadow:none} 50%{box-shadow:0 0 15px rgba(77,243,255,0.08)} }
+
+  /* ============================================
+     MOOD INPUT
+  ============================================ */
+  .mood-section {
+    margin: 28px 24px 0;
+    max-width: 500px;
+    width: calc(100% - 48px);
+  }
+
+  .mood-label {
+    font-size: 10px;
+    letter-spacing: 0.25em;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    display: block;
+    text-align: center;
+  }
+
+  .mood-pills {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .mood-pill {
+    padding: 6px 14px;
+    border-radius: 100px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text-muted);
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .mood-pill:hover { transform: scale(1.05); border-color: var(--border-bright); color: var(--text-primary); }
+  .mood-pill:active { transform: scale(0.96); }
+  .mood-pill.active {
+    background: rgba(201,168,76,0.12);
+    border-color: rgba(201,168,76,0.5);
+    color: var(--gold);
+    box-shadow: 0 0 12px rgba(201,168,76,0.15);
+    transform: scale(1.05);
+  }
+
+  /* ============================================
+     ZODIAC GRID
+  ============================================ */
+  .zodiac-section {
+    margin: 32px 16px 0;
+    max-width: 560px;
+    width: calc(100% - 32px);
+  }
+
+  .section-label {
+    font-family: var(--font-title);
+    font-size: 11px;
+    letter-spacing: 0.3em;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    text-align: center;
+    margin-bottom: 20px;
+  }
+
+  .zodiac-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+  }
+
+  @media (max-width: 400px) {
+    .zodiac-grid { grid-template-columns: repeat(3, 1fr); }
+  }
+
+  .zodiac-card {
+    aspect-ratio: 1;
+    background: var(--glass);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    cursor: pointer;
+    transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    position: relative;
+    overflow: hidden;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+  }
+
+  .zodiac-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 50% 0%, rgba(255,255,255,0.06) 0%, transparent 70%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  .zodiac-card:hover::before,
+  .zodiac-card.active::before { opacity: 1; }
+
+  .zodiac-card:hover {
+    transform: scale(1.06) rotate(-1deg);
+    border-color: rgba(201,168,76,0.4);
+    box-shadow: 0 8px 30px rgba(0,0,0,0.4), 0 0 20px rgba(201,168,76,0.1);
+  }
+
+  .zodiac-card:active { transform: scale(0.94) rotate(0deg); }
+
+  .zodiac-card.active {
+    background: rgba(201,168,76,0.08);
+    border-color: rgba(201,168,76,0.6);
+    box-shadow: 0 0 30px rgba(201,168,76,0.2), inset 0 0 20px rgba(201,168,76,0.05);
+    transform: scale(1.04);
+  }
+
+  .zodiac-card .ripple {
+    position: absolute;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.15);
+    transform: scale(0);
+    animation: rippleAnim 0.5s ease-out forwards;
+    pointer-events: none;
+  }
+
+  @keyframes rippleAnim {
+    to { transform: scale(4); opacity: 0; }
+  }
+
+  .zodiac-symbol {
+    font-size: 22px;
+    line-height: 1;
+    filter: drop-shadow(0 0 6px rgba(201,168,76,0.3));
+    transition: filter 0.3s ease, transform 0.3s ease;
+  }
+
+  .zodiac-card:hover .zodiac-symbol,
+  .zodiac-card.active .zodiac-symbol {
+    filter: drop-shadow(0 0 10px rgba(201,168,76,0.6));
+    transform: scale(1.1);
+  }
+
+  .zodiac-name {
+    font-family: var(--font-title);
+    font-size: 9px;
+    letter-spacing: 0.12em;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    transition: color 0.2s;
+  }
+
+  .zodiac-card:hover .zodiac-name,
+  .zodiac-card.active .zodiac-name { color: var(--gold); }
+
+  /* ============================================
+     LOADING STATE
+  ============================================ */
+  .loading-panel {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    padding: 40px 24px;
+    max-width: 400px;
+    width: 100%;
+    margin: 20px auto 0;
+    gap: 24px;
+  }
+
+  .loading-panel.show {
+    display: flex;
+    animation: fadeSlideIn 0.4s ease;
+  }
+
+  .loading-sigil {
+    width: 80px;
+    height: 80px;
+    position: relative;
+  }
+
+  .sigil-ring {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    border: 1px solid transparent;
+    animation: rotateSigil 3s linear infinite;
+  }
+
+  .sigil-ring-1 {
+    border-top-color: var(--gold);
+    border-right-color: rgba(201,168,76,0.3);
+    animation-duration: 2s;
+  }
+
+  .sigil-ring-2 {
+    inset: 8px;
+    border-top-color: var(--violet);
+    border-left-color: rgba(168,85,247,0.3);
+    animation-duration: 3s;
+    animation-direction: reverse;
+  }
+
+  .sigil-ring-3 {
+    inset: 16px;
+    border-top-color: var(--cyan);
+    border-bottom-color: rgba(77,243,255,0.2);
+    animation-duration: 1.5s;
+  }
+
+  .sigil-core {
+    position: absolute;
+    inset: 28px;
+    background: radial-gradient(circle, var(--gold) 0%, transparent 70%);
+    border-radius: 50%;
+    animation: corePulse 1.5s ease-in-out infinite;
+  }
+
+  @keyframes rotateSigil { to { transform: rotate(360deg); } }
+  @keyframes corePulse { 0%,100%{opacity:0.4; transform:scale(0.8)} 50%{opacity:1; transform:scale(1.2)} }
+
+  .loading-message {
+    font-family: var(--font-title);
+    font-size: 14px;
+    letter-spacing: 0.15em;
+    color: var(--text-muted);
+    text-align: center;
+    height: 20px;
+    transition: opacity 0.4s ease;
+    font-style: italic;
+  }
+
+  .loading-bar-wrap {
+    width: 200px;
+    height: 2px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .loading-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--gold), var(--cyan));
+    border-radius: 2px;
+    width: 0%;
+    transition: width 0.3s ease;
+    box-shadow: 0 0 8px var(--gold);
+  }
+
+  /* ============================================
+     READING CARD
+  ============================================ */
+  .reading-panel {
+    display: none;
+    flex-direction: column;
+    gap: 0;
+    max-width: 480px;
+    width: calc(100% - 32px);
+    margin: 20px auto 40px;
+  }
+
+  .reading-panel.show {
+    display: flex;
+    animation: fadeSlideIn 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  @keyframes fadeSlideIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .reading-header {
+    background: var(--glass);
+    border: 1px solid var(--border);
+    border-bottom: none;
+    border-radius: 20px 20px 0 0;
+    padding: 24px 24px 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+  }
+
+  .reading-sign-symbol {
+    font-size: 40px;
+    filter: drop-shadow(0 0 15px rgba(201,168,76,0.5));
+    animation: symbolFloat 4s ease-in-out infinite;
+  }
+
+  @keyframes symbolFloat {
+    0%,100% { transform: translateY(0); }
+    50% { transform: translateY(-4px); }
+  }
+
+  .reading-sign-info { flex: 1; }
+
+  .reading-sign-name {
+    font-family: var(--font-display);
+    font-size: 22px;
+    font-weight: 700;
+    background: linear-gradient(135deg, #e8d5a3, var(--gold));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    letter-spacing: 0.15em;
+  }
+
+  .reading-sign-dates {
+    font-size: 11px;
+    color: var(--text-muted);
+    letter-spacing: 0.1em;
+    margin-top: 2px;
+  }
+
+  .reading-badge {
+    background: rgba(201,168,76,0.1);
+    border: 1px solid rgba(201,168,76,0.3);
+    border-radius: 8px;
+    padding: 4px 10px;
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    color: var(--gold);
+    font-family: var(--font-title);
+    white-space: nowrap;
+  }
+
+  .reading-body {
+    background: var(--glass);
+    border: 1px solid var(--border);
+    border-top: none;
+    padding: 0 24px 0;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .reading-section {
+    padding: 20px 0;
+    border-bottom: 1px solid var(--border);
+    animation: sectionReveal 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  .reading-section:last-of-type { border-bottom: none; }
+
+  @keyframes sectionReveal {
+    from { opacity: 0; transform: translateX(-10px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+
+  .section-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 9px;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    font-family: var(--font-title);
+    padding: 3px 10px 3px 3px;
+    border-radius: 100px;
+    margin-bottom: 10px;
+  }
+
+  .section-tag.brutal { background: rgba(255,68,102,0.1); color: var(--crimson); border: 1px solid rgba(255,68,102,0.2); }
+  .section-tag.might { background: rgba(77,243,255,0.08); color: var(--cyan); border: 1px solid rgba(77,243,255,0.2); }
+  .section-tag.should { background: rgba(168,85,247,0.08); color: var(--violet); border: 1px solid rgba(168,85,247,0.2); }
+
+  .section-tag-dot {
+    width: 16px; height: 16px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px;
+  }
+
+  .section-tag.brutal .section-tag-dot { background: rgba(255,68,102,0.2); }
+  .section-tag.might .section-tag-dot { background: rgba(77,243,255,0.15); }
+  .section-tag.should .section-tag-dot { background: rgba(168,85,247,0.15); }
+
+  .section-text {
+    font-size: 14px;
+    line-height: 1.7;
+    color: var(--text-primary);
+    font-weight: 300;
+    letter-spacing: 0.02em;
+  }
+
+  /* ============================================
+     BLUR LOCK
+  ============================================ */
+  .lock-overlay {
+    position: relative;
+  }
+
+  .blurred-content {
+    filter: blur(6px);
+    user-select: none;
+    pointer-events: none;
+    opacity: 0.5;
+  }
+
+  .lock-gate {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    z-index: 10;
+  }
+
+  .lock-icon {
+    font-size: 24px;
+    animation: lockPulse 2s ease-in-out infinite;
+  }
+
+  @keyframes lockPulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.15)} }
+
+  .lock-text {
+    font-family: var(--font-title);
+    font-size: 13px;
+    letter-spacing: 0.1em;
+    color: var(--text-muted);
+    text-align: center;
+  }
+
+  /* ============================================
+     UNLOCK OPTIONS
+  ============================================ */
+  .unlock-panel {
+    background: var(--glass);
+    border: 1px solid var(--border);
+    border-top: 1px solid rgba(201,168,76,0.15);
+    border-radius: 0 0 20px 20px;
+    padding: 20px 24px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+  }
+
+  .unlock-label {
+    font-size: 10px;
+    letter-spacing: 0.25em;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    text-align: center;
+    margin-bottom: 4px;
+  }
+
+  .btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 14px 20px;
+    border-radius: 14px;
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.05em;
+    cursor: pointer;
+    border: none;
+    outline: none;
+    transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    position: relative;
+    overflow: hidden;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+  }
+
+  .btn:active { transform: scale(0.96); }
+
+  .btn-watch-ad {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--border-bright);
+    color: var(--text-primary);
+  }
+
+  .btn-watch-ad:hover {
+    background: rgba(255,255,255,0.08);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    transform: scale(1.02);
+  }
+
+  /* ============================================
+     AD SIMULATION
+  ============================================ */
+  .ad-panel {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px 24px;
+    gap: 14px;
+    background: rgba(0,0,0,0.4);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    margin-top: 8px;
+  }
+
+  .ad-panel.show { display: flex; animation: fadeSlideIn 0.3s ease; }
+
+  .ad-title {
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    color: var(--text-muted);
+    text-transform: uppercase;
+  }
+
+  .ad-progress-wrap {
+    width: 100%;
+    height: 3px;
+    background: var(--border);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+
+  .ad-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--cyan), var(--violet));
+    width: 0%;
+    transition: width 0.1s linear;
+    box-shadow: 0 0 8px var(--cyan);
+  }
+
+  .ad-countdown {
+    font-family: var(--font-title);
+    font-size: 24px;
+    font-weight: 600;
+    color: var(--text-primary);
+    letter-spacing: 0.05em;
+  }
+
+  .ad-skip-note {
+    font-size: 11px;
+    color: var(--text-dim);
+    text-align: center;
+  }
+
+  /* ============================================
+     REVEALED STATE — FULL READING
+  ============================================ */
+  .revealed-content {
+    animation: revealBurst 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  @keyframes revealBurst {
+    0% { opacity:0; transform:scale(0.95); filter:blur(10px); }
+    60% { filter:blur(0); }
+    100% { opacity:1; transform:scale(1); filter:blur(0); }
+  }
+
+  /* ============================================
+     SHARE / COPY
+  ============================================ */
+  .post-reveal-actions {
+    background: var(--glass);
+    border: 1px solid var(--border);
+    border-top: 1px solid rgba(201,168,76,0.15);
+    border-radius: 0 0 20px 20px;
+    padding: 16px 24px 20px;
+    display: none;
+    flex-direction: column;
+    gap: 10px;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+  }
+
+  .post-reveal-actions.show { display: flex; animation: fadeSlideIn 0.5s ease; }
+
+  .action-row {
+    display: flex;
+    gap: 8px;
+  }
+
+  .btn-action {
+    flex: 1;
+    padding: 11px 12px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    cursor: pointer;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text-muted);
+    transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+
+  .btn-action:hover {
+    border-color: var(--border-bright);
+    color: var(--text-primary);
+    transform: scale(1.03);
+    background: rgba(255,255,255,0.05);
+  }
+
+  .btn-action:active { transform: scale(0.96); }
+
+  .btn-action.copied {
+    border-color: rgba(77,243,255,0.4);
+    color: var(--cyan);
+    background: rgba(77,243,255,0.06);
+  }
+
+  .share-link-wrap {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .share-link-input {
+    flex: 1;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 9px 12px;
+    font-size: 11px;
+    color: var(--text-muted);
+    outline: none;
+    font-family: var(--font-body);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .share-link-input:focus { border-color: var(--border-bright); }
+
+  .retry-btn {
+    margin-top: 4px;
+    padding: 12px;
+    border-radius: 12px;
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    font-size: 12px;
+    letter-spacing: 0.1em;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: var(--font-title);
+    text-transform: uppercase;
+    text-align: center;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .retry-btn:hover { border-color: var(--border-bright); color: var(--text-primary); }
+
+  .regenerate-btn {
+    width: 100%;
+    margin-top: 12px;
+    padding: 13px;
+    border-radius: 12px;
+    background: rgba(201,168,76,0.06);
+    border: 1px solid rgba(201,168,76,0.25);
+    color: var(--gold);
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.15em;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    font-family: var(--font-title);
+    text-transform: uppercase;
+    text-align: center;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  .regenerate-btn:hover {
+    background: rgba(201,168,76,0.12);
+    border-color: rgba(201,168,76,0.5);
+    box-shadow: 0 0 20px rgba(201,168,76,0.1);
+    transform: scale(1.02);
+  }
+
+  .regenerate-btn:active { transform: scale(0.96); }
+
+  .regenerate-btn.spinning .regen-icon {
+    animation: regenSpin 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  @keyframes regenSpin {
+    0%   { transform: rotate(0deg) scale(1); }
+    50%  { transform: rotate(200deg) scale(1.3); }
+    100% { transform: rotate(360deg) scale(1); }
+  }
+
+  /* ============================================
+     TOAST NOTIFICATION
+  ============================================ */
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: rgba(20,20,30,0.95);
+    border: 1px solid var(--border-bright);
+    border-radius: 12px;
+    padding: 10px 20px;
+    font-size: 13px;
+    color: var(--text-primary);
+    z-index: 1000;
+    backdrop-filter: blur(20px);
+    transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    white-space: nowrap;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+  }
+
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  /* ============================================
+     FOOTER
+  ============================================ */
+  .footer {
+    margin: 20px 0 40px;
+    text-align: center;
+    font-size: 10px;
+    color: var(--text-dim);
+    letter-spacing: 0.15em;
+  }
+
+  /* ============================================
+     UTILITIES
+  ============================================ */
+  .hidden { display: none !important; }
+
+  @media (max-width: 500px) {
+    .reading-sign-name { font-size: 18px; }
+    .section-text { font-size: 13px; }
+    .zodiac-symbol { font-size: 18px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Gradient orbs -->
+<div class="gradient-orb orb-1"></div>
+<div class="gradient-orb orb-2"></div>
+<div class="gradient-orb orb-3"></div>
+
+<!-- Particle canvas -->
+<canvas id="particle-canvas"></canvas>
+
+<!-- Toast notification -->
+<div class="toast" id="toast"></div>
+
+<div id="app">
+
+  <!-- HEADER -->
+  <header class="header">
+    <span class="header-eyebrow">✦ Cosmic Intelligence ✦</span>
+    <h1 class="header-title">ZODASCOPE</h1>
+    <p class="header-sub">Daily Celestial Reading</p>
+    <div class="header-divider"></div>
+  </header>
+
+  <!-- RETENTION BANNER -->
+  <div class="retention-banner" id="retention-banner"></div>
+
+  <!-- GROWTH HOOK -->
+  <div class="growth-hook" id="growth-hook">
+    <div class="growth-hook-dot"></div>
+    <div class="growth-hook-text" id="growth-hook-text"></div>
+  </div>
+
+  <!-- MOOD SECTION -->
+  <div class="mood-section">
+    <span class="mood-label">Your energy right now</span>
+    <div class="mood-pills">
+      <div class="mood-pill" data-mood="focused">🎯 Focused</div>
+      <div class="mood-pill" data-mood="anxious">😬 Anxious</div>
+      <div class="mood-pill" data-mood="restless">⚡ Restless</div>
+      <div class="mood-pill" data-mood="numb">🌫 Numb</div>
+      <div class="mood-pill" data-mood="hopeful">🌱 Hopeful</div>
+      <div class="mood-pill" data-mood="scattered">💭 Scattered</div>
+    </div>
+  </div>
+
+  <!-- ZODIAC GRID -->
+  <div class="zodiac-section">
+    <p class="section-label">Select your sign</p>
+    <div class="zodiac-grid" id="zodiac-grid"></div>
+  </div>
+
+  <!-- LOADING STATE -->
+  <div class="loading-panel" id="loading-panel">
+    <div class="loading-sigil">
+      <div class="sigil-ring sigil-ring-1"></div>
+      <div class="sigil-ring sigil-ring-2"></div>
+      <div class="sigil-ring sigil-ring-3"></div>
+      <div class="sigil-core"></div>
+    </div>
+    <div class="loading-message" id="loading-message">Connecting to the cosmos...</div>
+    <div class="loading-bar-wrap">
+      <div class="loading-bar-fill" id="loading-bar"></div>
+    </div>
+  </div>
+
+  <!-- READING PANEL -->
+  <div class="reading-panel" id="reading-panel">
+
+    <!-- Reading Header -->
+    <div class="reading-header">
+      <div class="reading-sign-symbol" id="reading-symbol"></div>
+      <div class="reading-sign-info">
+        <div class="reading-sign-name" id="reading-name"></div>
+        <div class="reading-sign-dates" id="reading-dates"></div>
+      </div>
+      <div class="reading-badge" id="reading-badge"></div>
+    </div>
+
+    <!-- Reading Body -->
+    <div class="reading-body" id="reading-body">
+
+      <!-- Partial visible content (brutal truth - always shown) -->
+      <div id="visible-content">
+        <div class="reading-section" style="animation-delay:0.1s">
+          <div class="section-tag brutal">
+            <span class="section-tag-dot">🔥</span> Brutal Truth
+          </div>
+          <div class="section-text" id="brutal-text"></div>
+        </div>
+      </div>
+
+      <!-- Locked content -->
+      <div class="lock-overlay" id="lock-overlay">
+        <div class="blurred-content" id="blurred-content">
+          <div class="reading-section" style="animation-delay:0.2s">
+            <div class="section-tag might">
+              <span class="section-tag-dot">🌊</span> What Might Happen
+            </div>
+            <div class="section-text" id="might-text-blur"></div>
+          </div>
+          <div class="reading-section" style="padding-bottom:30px; animation-delay:0.3s">
+            <div class="section-tag should">
+              <span class="section-tag-dot">⚡</span> What You Should Do
+            </div>
+            <div class="section-text" id="should-text-blur"></div>
+          </div>
+        </div>
+        <div class="lock-gate" id="lock-gate">
+          <div class="lock-icon">🔒</div>
+          <div class="lock-text">Your full reading awaits</div>
+        </div>
+      </div>
+
+      <!-- Revealed content (hidden until unlocked) -->
+      <div id="revealed-content" class="hidden">
+        <div class="reading-section revealed-content" style="animation-delay:0.1s">
+          <div class="section-tag might">
+            <span class="section-tag-dot">🌊</span> What Might Happen
+          </div>
+          <div class="section-text" id="might-text"></div>
+        </div>
+        <div class="reading-section revealed-content" style="padding-bottom:8px; animation-delay:0.25s">
+          <div class="section-tag should">
+            <span class="section-tag-dot">⚡</span> What You Should Do
+          </div>
+          <div class="section-text" id="should-text"></div>
+        </div>
+      </div>
+
+    </div><!-- /reading-body -->
+
+    <!-- UNLOCK OPTIONS (shown when locked) -->
+    <div class="unlock-panel" id="unlock-panel">
+      <div class="unlock-label">Unlock Full Reading</div>
+      <button class="btn btn-watch-ad" id="btn-watch-ad" onclick="startAdSimulation()">
+        ▶ Watch Short Ad to Continue — Free
+      </button>
+      <!-- Ad simulation progress -->
+      <div class="ad-panel" id="ad-panel">
+        <div class="ad-title">Loading Sponsor Message</div>
+        <div class="ad-progress-wrap">
+          <div class="ad-progress-fill" id="ad-progress"></div>
+        </div>
+        <div class="ad-countdown" id="ad-countdown">5</div>
+        <div class="ad-skip-note">Your reading unlocks automatically</div>
+      </div>
+    </div>
+
+    <!-- POST REVEAL ACTIONS (shown after unlock) -->
+    <div class="post-reveal-actions" id="post-reveal-actions">
+      <div class="action-row">
+        <button class="btn-action" id="btn-copy" onclick="copyReading()">📋 Copy Reading</button>
+        <button class="btn-action" onclick="shareReading()">🔗 Share Link</button>
+      </div>
+      <div class="share-link-wrap">
+        <input class="share-link-input" id="share-link" readonly placeholder="Generating link...">
+      </div>
+      <button class="retry-btn" onclick="resetApp()">↺ New Reading</button>
+      <button class="regenerate-btn" id="btn-regenerate" onclick="regenerateReading()">
+        <span class="regen-icon">✦</span> Regenerate
+      </button>
+    </div>
+
+  </div><!-- /reading-panel -->
+
+  <footer class="footer">
+    ✦ For entertainment purposes only ✦
+  </footer>
+
+</div><!-- /app -->
+
+<script>
+/* ============================================================
+   DATA LAYER
+   Zodiac definitions, sentence pools per mood/time
+============================================================ */
+
+const ZODIACS = [
+  { name: 'Aries',       symbol: '♈', emoji: '🐏', dates: 'Mar 21 – Apr 19' },
+  { name: 'Taurus',      symbol: '♉', emoji: '🐂', dates: 'Apr 20 – May 20' },
+  { name: 'Gemini',      symbol: '♊', emoji: '👯', dates: 'May 21 – Jun 20' },
+  { name: 'Cancer',      symbol: '♋', emoji: '🦀', dates: 'Jun 21 – Jul 22' },
+  { name: 'Leo',         symbol: '♌', emoji: '🦁', dates: 'Jul 23 – Aug 22' },
+  { name: 'Virgo',       symbol: '♍', emoji: '🌾', dates: 'Aug 23 – Sep 22' },
+  { name: 'Libra',       symbol: '♎', emoji: '⚖️', dates: 'Sep 23 – Oct 22' },
+  { name: 'Scorpio',     symbol: '♏', emoji: '🦂', dates: 'Oct 23 – Nov 21' },
+  { name: 'Sagittarius', symbol: '♐', emoji: '🏹', dates: 'Nov 22 – Dec 21' },
+  { name: 'Capricorn',   symbol: '♑', emoji: '🐐', dates: 'Dec 22 – Jan 19' },
+  { name: 'Aquarius',    symbol: '♒', emoji: '🌊', dates: 'Jan 20 – Feb 18' },
+  { name: 'Pisces',      symbol: '♓', emoji: '🐟', dates: 'Feb 19 – Mar 20' },
+];
+
+// Sentence pools — each sign gets sign-aware variations
+const BRUTAL_POOLS = {
+  Aries: [
+    "You've been mistaking stubbornness for strength — they're not the same thing.",
+    "The urgency you feel right now isn't intuition. It's avoidance dressed up as action.",
+    "You keep starting things not to finish them, but to feel like you're moving.",
+    "Someone around you is waiting for you to slow down. You haven't noticed yet.",
+  ],
+  Taurus: [
+    "The comfort you're clinging to is the very thing blocking what you actually want.",
+    "You've been 'almost ready' for longer than you'll admit.",
+    "Loyalty is your strength. Right now, it might be keeping you stuck.",
+    "That thing you said you'd do last month? It's still waiting.",
+  ],
+  Gemini: [
+    "You've explained yourself to three different people today. None of them were the right person.",
+    "You're not bored — you're avoiding depth. They feel the same, but they're not.",
+    "Your mind has already moved on from something your life hasn't caught up to yet.",
+    "The best idea you've had recently? You talked about it instead of doing it.",
+  ],
+  Cancer: [
+    "You've been taking care of everyone except the one person who actually needs it: you.",
+    "There's someone you're still waiting to apologize to you. They won't.",
+    "Your intuition was right last week. You overrode it with logic. Reconsider.",
+    "The way you're protecting yourself right now is starting to look like isolation.",
+  ],
+  Leo: [
+    "You're performing strength right now instead of actually feeling it. They can tell.",
+    "The validation you're seeking today won't fix the thing underneath.",
+    "Your generosity lately has had conditions attached. You know this.",
+    "Something small is bruising your ego that you won't say out loud.",
+  ],
+  Virgo: [
+    "You're not fixing things right now — you're picking at them because you're anxious.",
+    "The plan you've been perfecting is being used to delay the moment you have to act.",
+    "Someone took your silence for approval. That's going to matter later.",
+    "You know the answer. You're hoping more analysis will change it.",
+  ],
+  Libra: [
+    "You made a decision, then unmade it, then didn't make it again. That's still a decision.",
+    "The peace you're keeping right now is costing someone else their honesty.",
+    "You've been agreeable in a way that doesn't actually agree with you.",
+    "There's a conversation you've been rewriting in your head. Have it.",
+  ],
+  Scorpio: [
+    "You figured someone out. Now you're bored of them. That pattern is about you, not them.",
+    "The thing you swore you were over? It came up in your dreams last night. You know why.",
+    "You're testing someone right now without telling them they're being tested.",
+    "Your instincts are right. Your timing is off. Wait.",
+  ],
+  Sagittarius: [
+    "You've promised something to someone that you've already mentally moved on from.",
+    "Freedom sounds good until you realize you've been using it to avoid accountability.",
+    "The next chapter you keep talking about? You haven't finished this one.",
+    "Someone gave you good advice recently. You dismissed it because it wasn't exciting enough.",
+  ],
+  Capricorn: [
+    "You're carrying something that was never yours to carry. You picked it up so no one would have to.",
+    "Rest isn't a reward for finishing everything. You'll never finish everything.",
+    "The version of success you're chasing was built from someone else's definition.",
+    "You've already made the right call. You're second-guessing it because it scared you.",
+  ],
+  Aquarius: [
+    "You're more attached than you're letting on. That's not a flaw, but pretending otherwise is.",
+    "Your detachment lately is protecting you from exactly what you need.",
+    "You've been interesting to everyone except yourself.",
+    "You saw a problem clearly. Then you decided it wasn't your problem. It is.",
+  ],
+  Pisces: [
+    "You've been living in the version of events that makes you the least responsible.",
+    "Something you're blaming on 'the world' is actually a pattern you're running.",
+    "You absorbed someone else's emotion today and called it yours. It wasn't.",
+    "You're still waiting for the feeling to pass instead of looking at what it's pointing to.",
+  ],
+};
+
+const MIGHT_POOLS = {
+  Aries: [
+    "A confrontation you've been accelerating toward may happen sooner than you planned — and possibly in front of the wrong audience.",
+    "An opportunity arrives, but it looks smaller than expected. Don't dismiss it before reading the fine print.",
+    "Someone will ask for your opinion today. Your honest answer could shift something significant.",
+  ],
+  Taurus: [
+    "A financial or material decision you've been postponing will demand your attention. Ignoring it compounds the cost.",
+    "Someone close to you is interpreting your silence as agreement. A small clarification could prevent something larger.",
+    "You may feel the urge to cancel or withdraw. Showing up anyway matters more than you think today.",
+  ],
+  Gemini: [
+    "A conversation you think is casual today has more weight than you're reading. Someone is filing it away.",
+    "Two things you started may collide in your schedule. One will have to wait — choose carefully which one.",
+    "Information you've been waiting on arrives, but it creates more questions than it answers.",
+  ],
+  Cancer: [
+    "An emotional undercurrent in a relationship may surface unexpectedly. What you say in the first 30 seconds matters most.",
+    "Someone may come to you for support while you're already running low. Your boundary is allowed.",
+    "An old memory is trying to inform a current decision. Check if that's still accurate.",
+  ],
+  Leo: [
+    "A public moment — however small — will carry more significance than usual. Don't waste it performing.",
+    "Someone you've been patient with will test that patience one more time. Your response becomes the story they tell.",
+    "Recognition you've been waiting for may come in an unexpected form. Don't reject it because it doesn't look right.",
+  ],
+  Virgo: [
+    "A small error you've been downplaying may surface for others to notice before you fix it.",
+    "You will be given responsibility you didn't ask for. Whether you resent it or own it determines the outcome.",
+    "The system you rely on may hiccup. Your backup plan — if you have one — will matter.",
+  ],
+  Libra: [
+    "You'll be asked to take a side in something you've been deliberately staying neutral on. Your answer, or your silence, will be read as a position either way.",
+    "A situation you thought was resolved may quietly resurface. It wasn't finished — it was just quiet.",
+    "Someone may misread your charm as invitation. A clear signal prevents a longer problem.",
+  ],
+  Scorpio: [
+    "Information you've been holding may feel necessary to release. Check your motivation before you do.",
+    "Someone is circling closer to a secret you'd rather not share. You decide how close you let them.",
+    "A power shift you've been waiting for may show its first sign today — but it's not complete yet.",
+  ],
+  Sagittarius: [
+    "A commitment you made casually will be treated seriously by someone else. This is the day you find out.",
+    "A door you thought was closed may reopen, but it won't stay open. The window is real and narrow.",
+    "Someone else's impatience may rush a decision that deserved more time.",
+  ],
+  Capricorn: [
+    "An authority figure may give you feedback that stings, but is more useful than you'll want to admit in the moment.",
+    "Something you've been executing perfectly may get criticized not for quality, but for optics. Stay grounded.",
+    "A shortcut someone offers you today comes with a cost that isn't visible upfront.",
+  ],
+  Aquarius: [
+    "A group dynamic you've been watching from the outside may pull you in whether you choose it or not.",
+    "An idea you mentioned offhand may come back credited to someone else. How you respond defines the relationship.",
+    "Someone may challenge your detachment directly. Their point is worth sitting with.",
+  ],
+  Pisces: [
+    "A feeling you've been dismissing as irrational may turn out to be more accurate than your logic. Let it speak.",
+    "Someone may take your compassion for naivety today. You don't need to correct them — your awareness is enough.",
+    "An escape route you've been planning may not lead where you think. Examine what you're actually running from.",
+  ],
+};
+
+const SHOULD_POOLS = {
+  Aries: [
+    "Before your next move, ask: am I doing this because it's right, or because staying still feels unbearable?",
+    "Say the harder, shorter version of what you've been over-explaining. Once. Then stop.",
+    "Slow one thing down today. Not because you need to — because the version of you that doesn't is costing you something.",
+  ],
+  Taurus: [
+    "Make one move toward the thing you've been 'almost ready' for. Not the full move. Just one.",
+    "Let someone see a version of you that's mid-process, not finished. They can handle it.",
+    "The upgrade you keep putting off — schedule it for next week. Not when it's 'the right time.'",
+  ],
+  Gemini: [
+    "Finish one thing before you begin the next. Not as a rule — as an experiment. See what it feels like.",
+    "Talk to fewer people about one thing, and do one more thing about it instead.",
+    "The person you need to be honest with already suspects. Half the cost is already paid. Say it.",
+  ],
+  Cancer: [
+    "When someone asks if you're okay today, answer honestly. Just once. See what happens.",
+    "The need you keep shelving for others — put it on the list today. Not first. Somewhere.",
+    "The grudge that keeps surfacing isn't about forgiveness. It's about what you haven't grieved yet. Start there.",
+  ],
+  Leo: [
+    "Do one thing today with no audience in mind. Notice how it feels different.",
+    "The acknowledgment you want from that person? Stop waiting. Give it to yourself first, and mean it.",
+    "Be visible in the way that costs you something, not the way that comes easily.",
+  ],
+  Virgo: [
+    "Send the thing. It doesn't need another pass.",
+    "Identify one thing you can let be imperfect without consequence. Practice tolerance there first.",
+    "The worry that woke you up at 3am? Write it down and leave it on paper. It doesn't need to live in your body.",
+  ],
+  Libra: [
+    "Make one decision today that no one else has input on. Even something small.",
+    "Say the thing you've been softening. You can still be kind. But say it clearly.",
+    "Choose discomfort with one person over comfort that costs you your own honesty.",
+  ],
+  Scorpio: [
+    "Let someone see you before you've figured everything out. Your control instinct is keeping connection at arm's length.",
+    "Drop one test you've been running on someone. Just trust what you've already seen.",
+    "The intensity you're feeling — channel it into building, not into watching.",
+  ],
+  Sagittarius: [
+    "Follow through on one promise today that you've been quietly deprioritizing. The specific one you just thought of.",
+    "Be where you said you'd be. The whole thing, not the beginning of it.",
+    "The lesson you keep arriving at from different directions — this is the time to actually use it.",
+  ],
+  Capricorn: [
+    "Accept help with one thing today. Let it be the thing you most want to handle yourself.",
+    "Tell someone what the work is actually costing you. Not to complain — to be known.",
+    "Take a real break. Not a productive break. A break where the goal is nothing.",
+  ],
+  Aquarius: [
+    "Let yourself care about one thing without qualifying it. No irony, no distance.",
+    "Reach out to the person you've been meaning to reach out to. Your reason for waiting is inside you, not them.",
+    "The idea you've been holding back because you're not sure it's good enough — share it. Exactly as it is.",
+  ],
+  Pisces: [
+    "Name the thing you're actually feeling. Not a metaphor for it. The direct word.",
+    "Make a decision based on what is, not what you hope it might become.",
+    "The person you're carrying anxiety for right now — they're more capable of their situation than you're letting yourself believe.",
+  ],
+};
+
+const LOADING_MESSAGES = [
+  "Reading the stars...",
+  "Analyzing your energy...",
+  "Something feels off today...",
+  "The planets are speaking...",
+  "Decoding your celestial map...",
+  "Sensing disturbances nearby...",
+  "Aligning with your frequency...",
+  "Calculating cosmic forces...",
+];
+
+const GROWTH_HOOKS = [
+  "Only a few people with your sign will see this reading today",
+  "This won't make sense now, but it will later tonight",
+  "Come back tonight — the evening reading shifts at sunset",
+  "Thousands have read this. Almost none acted on it.",
+  "What you're about to read has a 73% accuracy rate. You'll know which part.",
+  "Share this with someone whose sign is the same as yours",
+];
+
+/* ============================================================
+   STATE
+============================================================ */
+const state = {
+  selectedSign: null,
+  selectedMood: null,
+  currentReading: null,
+  isUnlocked: false,
+  readingId: null,
+};
+
+/* ============================================================
+   PARTICLES
+============================================================ */
+(function initParticles() {
+  const canvas = document.getElementById('particle-canvas');
+  const ctx = canvas.getContext('2d');
+  let W, H, particles = [];
+
+  function resize() {
+    W = canvas.width = window.innerWidth;
+    H = canvas.height = window.innerHeight;
+  }
+
+  function createParticle() {
+    return {
+      x: Math.random() * W,
+      y: Math.random() * H,
+      r: Math.random() * 1.2 + 0.3,
+      alpha: Math.random() * 0.4 + 0.1,
+      speed: Math.random() * 0.15 + 0.05,
+      drift: (Math.random() - 0.5) * 0.08,
+    };
+  }
+
+  function init() {
+    resize();
+    particles = Array.from({ length: 80 }, createParticle);
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+    for (const p of particles) {
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(201,168,76,${p.alpha})`;
+      ctx.fill();
+      p.y -= p.speed;
+      p.x += p.drift;
+      if (p.y < -5) { Object.assign(p, createParticle(), { y: H + 5 }); }
+    }
+    requestAnimationFrame(draw);
+  }
+
+  window.addEventListener('resize', resize);
+  init();
+  draw();
+})();
+
+/* ============================================================
+   UI INIT
+============================================================ */
+function buildZodiacGrid() {
+  const grid = document.getElementById('zodiac-grid');
+  ZODIACS.forEach((z, i) => {
+    const card = document.createElement('div');
+    card.className = 'zodiac-card';
+    card.dataset.index = i;
+    card.innerHTML = `<div class="zodiac-symbol">${z.symbol}</div><div class="zodiac-name">${z.name}</div>`;
+    card.addEventListener('click', (e) => {
+      createRipple(e, card);
+      selectSign(i);
+    });
+    grid.appendChild(card);
+  });
+}
+
+function createRipple(e, el) {
+  const rect = el.getBoundingClientRect();
+  const x = (e.clientX || rect.left + rect.width / 2) - rect.left;
+  const y = (e.clientY || rect.top + rect.height / 2) - rect.top;
+  const ripple = document.createElement('div');
+  ripple.className = 'ripple';
+  ripple.style.cssText = `left:${x}px;top:${y}px;width:60px;height:60px;margin:-30px`;
+  el.appendChild(ripple);
+  setTimeout(() => ripple.remove(), 600);
+}
+
+function showGrowthHook() {
+  const hook = GROWTH_HOOKS[Math.floor(Math.random() * GROWTH_HOOKS.length)];
+  document.getElementById('growth-hook-text').textContent = hook;
+}
+
+/* ============================================================
+   RETENTION SYSTEM
+============================================================ */
+function initRetention() {
+  const data = getStorage();
+  if (data.lastVisit) {
+    const last = new Date(data.lastVisit);
+    const now = new Date();
+    const diffH = (now - last) / 3600000;
+    const nextH = 24 - diffH;
+    if (nextH > 0 && diffH < 24) {
+      const banner = document.getElementById('retention-banner');
+      startRetentionCountdown(nextH, banner);
+    }
+  }
+  setStorage({ ...getStorage(), lastVisit: new Date().toISOString() });
+
+  // Pre-select last sign
+  if (data.lastSign !== undefined) {
+    const cards = document.querySelectorAll('.zodiac-card');
+    cards.forEach(c => c.classList.remove('active'));
+    cards[data.lastSign].classList.add('active');
+    state.selectedSign = data.lastSign;
+  }
+}
+
+function startRetentionCountdown(hoursLeft, banner) {
+  banner.classList.add('show');
+  function tick() {
+    const h = Math.floor(hoursLeft);
+    const m = Math.floor((hoursLeft - h) * 60);
+    banner.innerHTML = `✦ You last consulted Zodascope ${24 - Math.ceil(hoursLeft)}h ago.<br>
+      Next reading: <span class="countdown-timer">${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}</span> until new cosmic energy arrives.`;
+    hoursLeft -= 1/3600;
+    if (hoursLeft > 0) setTimeout(tick, 1000);
+  }
+  tick();
+}
+
+/* ============================================================
+   LOCAL STORAGE HELPERS
+============================================================ */
+function getStorage() {
+  try { return JSON.parse(localStorage.getItem('zodascope_data') || '{}'); } 
+  catch { return {}; }
+}
+function setStorage(data) {
+  try { localStorage.setItem('zodascope_data', JSON.stringify(data)); } catch {}
+}
+
+/* ============================================================
+   MOOD SELECTION
+============================================================ */
+document.querySelectorAll('.mood-pill').forEach(pill => {
+  pill.addEventListener('click', () => {
+    document.querySelectorAll('.mood-pill').forEach(p => p.classList.remove('active'));
+    pill.classList.add('active');
+    state.selectedMood = pill.dataset.mood;
+  });
+});
+
+/* ============================================================
+   SIGN SELECTION + READING FLOW
+============================================================ */
+function selectSign(index) {
+  if (state.selectedSign === index && document.getElementById('reading-panel').classList.contains('show')) return;
+
+  state.selectedSign = index;
+  state.isUnlocked = false;
+
+  const cards = document.querySelectorAll('.zodiac-card');
+  cards.forEach(c => c.classList.remove('active'));
+  cards[index].classList.add('active');
+
+  setStorage({ ...getStorage(), lastSign: index });
+  startLoading();
+}
+
+/* ============================================================
+   LOADING SEQUENCE
+============================================================ */
+function startLoading() {
+  // Hide reading
+  document.getElementById('reading-panel').classList.remove('show');
+
+  const panel = document.getElementById('loading-panel');
+  const msgEl = document.getElementById('loading-message');
+  const bar = document.getElementById('loading-bar');
+
+  panel.classList.add('show');
+  bar.style.width = '0%';
+
+  // Check for shared reading in URL
+  const urlParams = new URLSearchParams(window.location.search);
+  const sharedId = urlParams.get('r');
+  
+  let msgIndex = 0;
+  const totalDuration = 2800; // ms
+  const msgInterval = 600;
+  const msgs = [...LOADING_MESSAGES].sort(() => Math.random() - 0.5).slice(0, 4);
+
+  const msgTimer = setInterval(() => {
+    msgEl.style.opacity = '0';
+    setTimeout(() => {
+      msgEl.textContent = msgs[msgIndex % msgs.length];
+      msgEl.style.opacity = '1';
+      msgIndex++;
+    }, 200);
+  }, msgInterval);
+
+  // Progress bar animation
+  let progress = 0;
+  const barTimer = setInterval(() => {
+    progress += (100 - progress) * 0.08 + 0.5;
+    if (progress > 92) progress = 92;
+    bar.style.width = progress + '%';
+  }, 50);
+
+  setTimeout(() => {
+    clearInterval(msgTimer);
+    clearInterval(barTimer);
+    bar.style.width = '100%';
+
+    setTimeout(() => {
+      panel.classList.remove('show');
+      generateAndShowReading(sharedId);
+    }, 300);
+  }, totalDuration);
+}
+
+/* ============================================================
+   CONTENT ENGINE — Reading Generation
+============================================================ */
+function pick(arr, seed) {
+  const idx = seed !== undefined
+    ? seed % arr.length
+    : Math.floor(Math.random() * arr.length);
+  return arr[idx];
+}
+
+function getMoodModifier(mood) {
+  const modifiers = {
+    anxious:   { brutal: "That anxiety running through you? It's pointing somewhere real. Pay attention.",
+                 prefix: "With that unsettled energy you're carrying — " },
+    focused:   { brutal: "Focused energy is powerful. But right now, make sure you're pointed at the right thing.",
+                 prefix: "Sharp as you feel right now, " },
+    restless:  { brutal: "The restlessness isn't random. You know what it's about.",
+                 prefix: "All that energy moving through you — " },
+    numb:      { brutal: "The numbness is protection. Ask yourself what it's protecting you from.",
+                 prefix: "Even through that distance you're feeling, " },
+    hopeful:   { brutal: "Your optimism is an asset. Just make sure it's not covering something you should look at.",
+                 prefix: "Even in that open, hopeful space — " },
+    scattered: { brutal: "The scattered feeling isn't a failure. It's a signal that too many things are unfinished.",
+                 prefix: "Beneath that scattered energy, " },
+  };
+  return mood && modifiers[mood] ? modifiers[mood] : null;
+}
+
+function getTimeContext() {
+  const h = new Date().getHours();
+  if (h >= 5 && h < 12) return 'morning';
+  if (h >= 12 && h < 17) return 'afternoon';
+  if (h >= 17 && h < 21) return 'evening';
+  return 'night';
+}
+
+function generateReading(signIndex, seed) {
+  const sign = ZODIACS[signIndex];
+  const name = sign.name;
+  const moodMod = getMoodModifier(state.selectedMood);
+  const timeCtx = getTimeContext();
+
+  // Use seed for shareable reproducible readings
+  const useSeed = seed !== undefined;
+  const s1 = useSeed ? seed % 4 : undefined;
+  const s2 = useSeed ? (seed + 1) % 3 : undefined;
+  const s3 = useSeed ? (seed + 2) % 3 : undefined;
+
+  let brutalText = pick(BRUTAL_POOLS[name], s1);
+  let mightText = pick(MIGHT_POOLS[name], s2);
+  let shouldText = pick(SHOULD_POOLS[name], s3);
+
+  // Mood injection
+  if (moodMod && !useSeed) {
+    brutalText = moodMod.brutal + ' ' + brutalText;
+  }
+
+  // Time-of-day flavoring
+  if (timeCtx === 'night' && !useSeed) {
+    shouldText += ' The late hour makes this harder to act on — but harder doesn\'t mean wrong.';
+  } else if (timeCtx === 'morning' && !useSeed) {
+    shouldText = 'Before the day fills up: ' + shouldText.charAt(0).toLowerCase() + shouldText.slice(1);
+  }
+
+  const readingId = useSeed ? seed : Math.floor(Math.random() * 90000) + 10000;
+
+  return { sign, brutalText, mightText, shouldText, readingId, timeCtx };
+}
+
+/* ============================================================
+   DISPLAY READING
+============================================================ */
+function generateAndShowReading(sharedId) {
+  const signIndex = state.selectedSign;
+  const sign = ZODIACS[signIndex];
+
+  let reading;
+  if (sharedId) {
+    const parsed = parseInt(sharedId, 36);
+    const idx = parsed % 12;
+    const seed = Math.floor(parsed / 12);
+    if (!isNaN(idx) && ZODIACS[idx]) {
+      state.selectedSign = idx;
+      // Update active card
+      document.querySelectorAll('.zodiac-card').forEach((c,i) => c.classList.toggle('active', i===idx));
+      reading = generateReading(idx, seed);
+      state.isUnlocked = true; // shared readings come unlocked
+    } else {
+      reading = generateReading(signIndex);
+    }
+    // Clear URL param after loading
+    window.history.replaceState({}, '', window.location.pathname);
+  } else {
+    reading = generateReading(signIndex);
+  }
+
+  state.currentReading = reading;
+  state.readingId = reading.readingId;
+
+  // Populate DOM
+  document.getElementById('reading-symbol').textContent = sign.symbol;
+  document.getElementById('reading-name').textContent = sign.name.toUpperCase();
+  document.getElementById('reading-dates').textContent = sign.dates;
+  document.getElementById('reading-badge').textContent = reading.timeCtx.toUpperCase() + ' READING';
+
+  document.getElementById('brutal-text').textContent = reading.brutalText;
+  document.getElementById('might-text-blur').textContent = reading.mightText;
+  document.getElementById('should-text-blur').textContent = reading.shouldText;
+  document.getElementById('might-text').textContent = reading.mightText;
+  document.getElementById('should-text').textContent = reading.shouldText;
+
+  // Reset unlock state
+  document.getElementById('lock-overlay').style.display = '';
+  document.getElementById('revealed-content').classList.add('hidden');
+  document.getElementById('unlock-panel').style.display = '';
+  document.getElementById('post-reveal-actions').classList.remove('show');
+  document.getElementById('ad-panel').classList.remove('show');
+  document.getElementById('btn-watch-ad').disabled = false;
+
+  // If unlocked via share link
+  if (state.isUnlocked) {
+    revealContent(true);
+  }
+
+  // Generate share link
+  const encodedId = (state.readingId * 12 + signIndex).toString(36);
+  const shareUrl = `${location.origin}${location.pathname}?r=${encodedId}`;
+  document.getElementById('share-link').value = shareUrl;
+
+  // Show panel
+  document.getElementById('reading-panel').classList.add('show');
+  document.getElementById('reading-panel').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+/* ============================================================
+   UNLOCK SYSTEM
+============================================================ */
+function startAdSimulation() {
+  const adPanel = document.getElementById('ad-panel');
+  const btn = document.getElementById('btn-watch-ad');
+  const progress = document.getElementById('ad-progress');
+  const countdown = document.getElementById('ad-countdown');
+
+  btn.disabled = true;
+  adPanel.classList.add('show');
+
+  let seconds = 5;
+  let pct = 0;
+  countdown.textContent = seconds;
+
+  const timer = setInterval(() => {
+    seconds--;
+    pct = ((5 - seconds) / 5) * 100;
+    progress.style.width = pct + '%';
+    countdown.textContent = seconds;
+
+    if (seconds <= 0) {
+      clearInterval(timer);
+      adPanel.classList.remove('show');
+      revealContent();
+    }
+  }, 1000);
+}
+
+function revealContent(silent = false) {
+  state.isUnlocked = true;
+
+  // Hide lock
+  document.getElementById('lock-overlay').style.display = 'none';
+  document.getElementById('unlock-panel').style.display = 'none';
+
+  // Show revealed
+  document.getElementById('revealed-content').classList.remove('hidden');
+  document.getElementById('post-reveal-actions').classList.add('show');
+
+  if (!silent) {
+    // Satisfying haptic
+    if (navigator.vibrate) navigator.vibrate([10, 20, 30]);
+    showToast('✦ Full reading unlocked');
+  }
+}
+
+/* ============================================================
+   SHARE + COPY
+============================================================ */
+function copyReading() {
+  const r = state.currentReading;
+  if (!r) return;
+  const sign = r.sign;
+  const text = `${sign.name.toUpperCase()} ${sign.symbol}\n\nBrutal Truth:\n${r.brutalText}\n\nWhat Might Happen:\n${r.mightText}\n\nWhat You Should Do:\n${r.shouldText}\n\n— zodascope reading`;
+
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.getElementById('btn-copy');
+    btn.textContent = '✓ Copied';
+    btn.classList.add('copied');
+    showToast('Reading copied to clipboard');
+    setTimeout(() => {
+      btn.textContent = '📋 Copy Reading';
+      btn.classList.remove('copied');
+    }, 2000);
+  }).catch(() => showToast('Could not copy — try manually'));
+}
+
+function shareReading() {
+  const url = document.getElementById('share-link').value;
+  if (navigator.share) {
+    navigator.share({
+      title: `${state.currentReading.sign.name} Reading — Zodascope`,
+      text: state.currentReading.brutalText,
+      url,
+    }).catch(() => {});
+  } else {
+    navigator.clipboard.writeText(url).then(() => showToast('Share link copied!')).catch(() => {});
+  }
+}
+
+/* ============================================================
+   REGENERATE
+============================================================ */
+function regenerateReading() {
+  if (state.selectedSign === null) return;
+
+  // Spin the icon for tactile feedback
+  const btn = document.getElementById('btn-regenerate');
+  btn.classList.add('spinning');
+  btn.disabled = true;
+  setTimeout(() => btn.classList.remove('spinning'), 700);
+
+  // Hide current reading body with a quick fade-out
+  const panel = document.getElementById('reading-panel');
+  panel.style.transition = 'opacity 0.2s ease';
+  panel.style.opacity = '0';
+
+  setTimeout(() => {
+    // Reset unlock state so the new reading goes through the lock flow again
+    state.isUnlocked = false;
+
+    // Re-run the full loading + generation flow
+    panel.style.opacity = '';
+    panel.style.transition = '';
+    startLoading();
+
+    setTimeout(() => btn.disabled = false, 3200);
+  }, 220);
+}
+
+/* ============================================================
+   RESET
+============================================================ */
+function resetApp() {
+  state.selectedSign = null;
+  state.selectedMood = null;
+  state.currentReading = null;
+  state.isUnlocked = false;
+
+  document.querySelectorAll('.zodiac-card').forEach(c => c.classList.remove('active'));
+  document.querySelectorAll('.mood-pill').forEach(p => p.classList.remove('active'));
+  document.getElementById('reading-panel').classList.remove('show');
+
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+/* ============================================================
+   TOAST
+============================================================ */
+function showToast(msg) {
+  const toast = document.getElementById('toast');
+  toast.textContent = msg;
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 2500);
+}
+
+/* ============================================================
+   BOOT
+============================================================ */
+buildZodiacGrid();
+showGrowthHook();
+initRetention();
+
+// Check for shared reading in URL on load
+const urlParams = new URLSearchParams(window.location.search);
+const sharedId = urlParams.get('r');
+if (sharedId) {
+  const parsed = parseInt(sharedId, 36);
+  const idx = parsed % 12;
+  if (!isNaN(idx) && idx >= 0 && idx < 12) {
+    // Auto-select and start loading
+    setTimeout(() => {
+      state.selectedSign = idx;
+      startLoading();
+    }, 400);
+  }
+}
+</script>
+</body>
+</html>
