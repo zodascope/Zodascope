@@ -950,58 +950,48 @@
   }
 
   /* ============================================
-     GOOGLE TRANSLATE WIDGET
+     LANGUAGE SELECTOR
   ============================================ */
-  #google_translate_element {
+  .lang-selector-wrap {
+    margin-top: 16px;
     display: flex;
     justify-content: center;
-    margin: 12px 24px 0;
   }
 
-  /* Hide Google's branding bar that appears at top of page */
-  .goog-te-banner-frame,
-  #goog-gt-tt,
-  .goog-te-balloon-frame { display: none !important; }
+  .lang-selector-wrap select {
+    background: rgba(201,168,76,0.06);
+    border: 1px solid rgba(201,168,76,0.3);
+    border-radius: 10px;
+    color: var(--gold);
+    font-family: var(--font-body);
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    padding: 7px 32px 7px 14px;
+    cursor: pointer;
+    outline: none;
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23c9a84c'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    background-size: 8px;
+    transition: all 0.2s ease;
+  }
 
+  .lang-selector-wrap select:hover {
+    background-color: rgba(201,168,76,0.12);
+    border-color: rgba(201,168,76,0.6);
+    box-shadow: 0 0 12px rgba(201,168,76,0.15);
+  }
+
+  .lang-selector-wrap select option {
+    background: #0d0d1a;
+    color: #fff;
+  }
+
+  /* Hide Google's top banner bar */
+  .goog-te-banner-frame { display: none !important; }
   body { top: 0 !important; }
-
-  /* Style the select dropdown to match dark theme */
-  .goog-te-gadget {
-    font-family: var(--font-body) !important;
-    font-size: 0 !important; /* hide "Powered by Google" text */
-    color: transparent !important;
-  }
-
-  .goog-te-gadget .goog-te-combo {
-    background: rgba(201,168,76,0.06) !important;
-    border: 1px solid rgba(201,168,76,0.3) !important;
-    border-radius: 10px !important;
-    color: var(--gold) !important;
-    font-family: var(--font-title) !important;
-    font-size: 11px !important;
-    letter-spacing: 0.12em !important;
-    padding: 7px 14px !important;
-    cursor: pointer !important;
-    outline: none !important;
-    appearance: none !important;
-    -webkit-appearance: none !important;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23c9a84c'/%3E%3C/svg%3E") !important;
-    background-repeat: no-repeat !important;
-    background-position: right 10px center !important;
-    padding-right: 28px !important;
-    transition: all 0.2s ease !important;
-  }
-
-  .goog-te-gadget .goog-te-combo:hover {
-    background-color: rgba(201,168,76,0.12) !important;
-    border-color: rgba(201,168,76,0.6) !important;
-    box-shadow: 0 0 12px rgba(201,168,76,0.15) !important;
-  }
-
-  /* Hide the "Select Language" default option label */
-  .goog-te-gadget .goog-te-combo option[value=""] {
-    display: none;
-  }
 
   /* ============================================
      UTILITIES
@@ -1037,7 +1027,21 @@
     <p class="header-sub">Daily Celestial Reading</p>
     <div class="header-divider"></div>
     <!-- Language selector -->
-    <div id="google_translate_element"></div>
+    <div class="lang-selector-wrap">
+      <select id="lang-select" onchange="changeLanguage(this.value)">
+        <option value="" disabled selected>🌐 Language</option>
+        <option value="en">English</option>
+        <option value="hi">हिंदी — Hindi</option>
+        <option value="ta">தமிழ் — Tamil</option>
+        <option value="te">తెలుగు — Telugu</option>
+        <option value="bn">বাংলা — Bengali</option>
+        <option value="mr">मराठी — Marathi</option>
+        <option value="kn">ಕನ್ನಡ — Kannada</option>
+        <option value="ml">മലയാളം — Malayalam</option>
+        <option value="gu">ગુજરાતી — Gujarati</option>
+        <option value="pa">ਪੰਜਾਬੀ — Punjabi</option>
+      </select>
+    </div>
   </header>
 
   <!-- RETENTION BANNER -->
@@ -1985,17 +1989,40 @@ if (sharedId) {
 </script>
 <script src="https://pl28937471.effectivegatecpm.com/f1/f8/a6/f1f8a66c6bcef42f12546cb698418499.js"></script>
 
-<!-- Google Translate — must load after the div exists -->
+<!-- Language switcher using Google Translate cookie method -->
+<script>
+function changeLanguage(lang) {
+  if (lang === 'en') {
+    // Remove translation cookie to go back to English
+    document.cookie = 'googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+    document.cookie = 'googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=' + location.hostname;
+    location.reload();
+    return;
+  }
+  // Set Google Translate cookie
+  document.cookie = 'googtrans=/en/' + lang + '; path=/';
+  document.cookie = 'googtrans=/en/' + lang + '; path=/; domain=' + location.hostname;
+  location.reload();
+}
+
+// On load — set dropdown to match current cookie
+(function() {
+  const match = document.cookie.match(/googtrans=\/en\/([a-z]+)/);
+  if (match) {
+    const sel = document.getElementById('lang-select');
+    if (sel) sel.value = match[1];
+  }
+})();
+</script>
+<script src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
 <script>
 function googleTranslateElementInit() {
   new google.translate.TranslateElement({
     pageLanguage: 'en',
-    includedLanguages: 'hi,ta,te,bn,mr,kn,ml,gu,pa,en',
-    layout: google.translate.TranslateElement.InlineLayout.SIMPLE,
     autoDisplay: false
-  }, 'google_translate_element');
+  }, 'dummy_translate_element');
 }
 </script>
-<script src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+<div id="dummy_translate_element" style="display:none;"></div>
 </body>
 </html>
